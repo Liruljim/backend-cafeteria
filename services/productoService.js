@@ -24,23 +24,36 @@ const createProducto = async (productData) => {
   }
 
   // Create Product
-  const { data: newProd, error } = await supabase.from('productos').insert([productData]).select().single();
+  const productToInsert = {
+    ...productData,
+    tipo: productData.tipo || 'stock' // Default to stock if not provided
+  };
+
+  const { data: newProd, error } = await supabase.from('productos').insert([productToInsert]).select().single();
   if (error) throw error;
 
-  // AUTO-CREATE Inventory for all floors (Requirement option A)
+  // AUTO-CREATE Inventory for all floors
   const { data: floors } = await supabase.from('pisos').select('id');
   if (floors && floors.length > 0) {
-    // Ensure we have unique floors if the DB has duplicates (by ID)
     const uniqueFloorIds = [...new Set(floors.map(f => f.id))];
     
-    const inventoryRecords = uniqueFloorIds.map(floorId => ({
-      producto_id: newProd.id,
-      piso_id: floorId,
-      stock: 0
-    }));
-
-    // Use upsert to avoid errors if records somehow already exist
-    await supabase.from('inventario').upsert(inventoryRecords, { onConflict: 'producto_id, piso_id' });
+    for (const floorId of uniqueFloorIds) {
+        // Check if already exists to avoid 400 with upsert without constraint
+        const { data: existing } = await supabase
+            .from('inventario')
+            .select('id')
+            .eq('producto_id', newProd.id)
+            .eq('piso_id', floorId)
+            .single();
+            
+        if (!existing) {
+            await supabase.from('inventario').insert({
+                producto_id: newProd.id,
+                piso_id: floorId,
+                stock: 0
+            });
+        }
+    }
   }
 
   return newProd;
