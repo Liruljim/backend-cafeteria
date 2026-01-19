@@ -9,15 +9,23 @@ async function getProductosPorPiso(req, res) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('inventario')
       .select('stock, producto_id, productos!inner(id, nombre, sku, precio, tipo, categorias!category_id(nombre))')
-      .eq('piso_id', piso_id)
-      .or('stock.gt.0,productos.tipo.neq.stock');
+      .eq('piso_id', piso_id);
 
     if (error) throw error;
 
-    const productos = data.map(item => ({
+    // Filter in JS to avoid "failed to parse logic tree" with cross-table OR filters
+    const filteredData = rawData.filter(item => {
+      const isStockItem = item.productos?.tipo === 'stock';
+      const hasStock = (item.stock || 0) > 0;
+      
+      // We show: (is a stock item AND it has stock) OR (is NOT a stock item)
+      return (isStockItem && hasStock) || !isStockItem;
+    });
+
+    const productos = filteredData.map(item => ({
       id: item.productos.id,
       nombre: item.productos.nombre,
       sku: item.productos.sku,
