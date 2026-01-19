@@ -10,6 +10,7 @@ const proveedoresRoutes = require('./routes/proveedoresRoutes');
 const productosRoutes = require('./routes/productosRoutes');
 const pisoRoutes = require('./routes/pisoRoutes');
 const inventarioRoutes = require('./routes/inventarioRoutes');
+const creditosRoutes = require('./routes/creditosRoutes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/proveedores', verificarRol(['admin']), proveedoresRoutes);
 app.use('/api/productos', verificarRol(['admin']), productosRoutes);
 app.use('/api/inventario', verificarRol(['admin']), inventarioRoutes);
 app.use('/api/reportes', verificarRol(['admin']), require('./routes/reportesRoutes'));
+app.use('/api/creditos', verificarRol(['admin']), creditosRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
