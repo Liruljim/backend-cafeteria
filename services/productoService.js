@@ -33,9 +33,17 @@ const createProducto = async (productData) => {
   if (error) throw error;
 
   // AUTO-CREATE Inventory for all floors
-  const { data: floors } = await supabase.from('pisos').select('id');
+  const { data: floors } = await supabase.from('pisos').select('id, nombre');
   if (floors && floors.length > 0) {
-    const uniqueFloorIds = [...new Set(floors.map(f => f.id))];
+    // Group floors by name to avoid duplicates if the DB has redundant floor names
+    const uniqueFloorsByName = {};
+    floors.forEach(f => {
+        if (!uniqueFloorsByName[f.nombre.trim().toLowerCase()]) {
+            uniqueFloorsByName[f.nombre.trim().toLowerCase()] = f.id;
+        }
+    });
+
+    const uniqueFloorIds = Object.values(uniqueFloorsByName);
     
     for (const floorId of uniqueFloorIds) {
         // Check if already exists to avoid 400 with upsert without constraint

@@ -11,10 +11,11 @@ const getInventario = async (filters) => {
   return data;
 };
 
-const ajustarStock = async ({ producto_id, piso_id, modo, cantidad, observacion }) => {
+const ajustarStock = async ({ producto_id, piso_id, modo, tipo, cantidad, observacion }) => {
+  const mode = modo || tipo; // Support both names
   // Validations
-  if (!producto_id || !piso_id || !modo || cantidad === undefined) {
-    throw new Error('Faltan datos requeridos (producto_id, piso_id, modo, cantidad)');
+  if (!producto_id || !piso_id || !mode || cantidad === undefined) {
+    throw new Error(`Faltan datos requeridos (producto_id, piso_id, mode: ${mode}, cantidad: ${cantidad})`);
   }
 
   // 1. Get current stock
@@ -37,10 +38,10 @@ const ajustarStock = async ({ producto_id, piso_id, modo, cantidad, observacion 
   let finalStock = 0;
   let delta = 0;
 
-  if (modo === 'SET') {
+  if (mode === 'SET') {
     finalStock = parseInt(cantidad);
     delta = finalStock - currentStock;
-  } else if (modo === 'DELTA') {
+  } else if (mode === 'DELTA') {
     delta = parseInt(cantidad);
     finalStock = currentStock + delta;
   } else {
@@ -50,7 +51,7 @@ const ajustarStock = async ({ producto_id, piso_id, modo, cantidad, observacion 
   if (finalStock < 0) throw new Error('El stock no puede ser negativo');
 
   // 2. Register Movement First (Audit Trail)
-  const tipo = delta >= 0 ? 'ENTRADA' : 'SALIDA'; 
+  const tipoMovCalculado = delta >= 0 ? 'ENTRADA' : 'SALIDA'; 
   // If user calls it 'AJUSTE', we might map it differently, but ENTRADA/SALIDA based on math is robust.
   // Or purely 'AJUSTE'. Let's stick to strict types if possible.
   // Requirement says: check (tipo_movimiento in ('ENTRADA','SALIDA','AJUSTE'))
@@ -58,7 +59,7 @@ const ajustarStock = async ({ producto_id, piso_id, modo, cantidad, observacion 
   // Determine Type: if simple correction -> AJUSTE? If real movement -> ENTRADA/SALIDA?
   // Let's infer: If 'SET', likely 'AJUSTE'. If 'DELTA', likely ENTRADA/SALIDA.
   let tipoMov = 'AJUSTE';
-  if (modo === 'DELTA') {
+  if (mode === 'DELTA') {
       tipoMov = delta >= 0 ? 'ENTRADA' : 'SALIDA';
   }
 
@@ -67,7 +68,7 @@ const ajustarStock = async ({ producto_id, piso_id, modo, cantidad, observacion 
     piso_id,
     cantidad: Math.abs(delta),
     tipo_movimiento: tipoMov,
-    observacion: observacion || `Ajuste automático (${modo})`
+    observacion: observacion || `Ajuste automático (${mode})`
   });
   if (movError) throw movError;
 
