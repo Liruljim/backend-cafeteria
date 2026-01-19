@@ -30,12 +30,17 @@ const createProducto = async (productData) => {
   // AUTO-CREATE Inventory for all floors (Requirement option A)
   const { data: floors } = await supabase.from('pisos').select('id');
   if (floors && floors.length > 0) {
-    const inventoryRecords = floors.map(floor => ({
+    // Ensure we have unique floors if the DB has duplicates (by ID)
+    const uniqueFloorIds = [...new Set(floors.map(f => f.id))];
+    
+    const inventoryRecords = uniqueFloorIds.map(floorId => ({
       producto_id: newProd.id,
-      piso_id: floor.id,
+      piso_id: floorId,
       stock: 0
     }));
-    await supabase.from('inventario').insert(inventoryRecords);
+
+    // Use upsert to avoid errors if records somehow already exist
+    await supabase.from('inventario').upsert(inventoryRecords, { onConflict: 'producto_id, piso_id' });
   }
 
   return newProd;

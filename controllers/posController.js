@@ -11,9 +11,9 @@ async function getProductosPorPiso(req, res) {
   try {
     const { data, error } = await supabase
       .from('inventario')
-      .select('stock, producto_id, productos!producto_id(id, nombre, sku, precio, categorias!category_id(nombre))')
+      .select('stock, producto_id, productos!inner(id, nombre, sku, precio, tipo, categorias!category_id(nombre))')
       .eq('piso_id', piso_id)
-      .gt('stock', 0); 
+      .or('stock.gt.0,productos.tipo.neq.stock');
 
     if (error) throw error;
 
