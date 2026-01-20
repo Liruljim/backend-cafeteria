@@ -30,6 +30,7 @@ async function getProductosPorPiso(req, res) {
       nombre: item.productos.nombre,
       sku: item.productos.sku,
       precio: item.productos.precio,
+      tipo: item.productos.tipo,
       categoria: item.productos.categorias?.nombre,
       stock: item.stock
     }));
