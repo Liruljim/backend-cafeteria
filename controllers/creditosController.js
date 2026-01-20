@@ -84,8 +84,35 @@ async function pagarDeudaTotal(req, res) {
   }
 }
 
+/**
+ * Registra un abono general que se distribuye entre los créditos pendientes (FIFO)
+ */
+async function registrarAbono(req, res) {
+  const { cliente_id, monto, usuario_id } = req.body;
+
+  if (!cliente_id || !monto || !usuario_id) {
+    return res.status(400).json({ error: 'cliente_id, monto y usuario_id son requeridos' });
+  }
+
+  try {
+    const { error } = await supabase.rpc('registrar_abono_general', {
+      p_cliente_id: cliente_id,
+      p_monto: monto,
+      p_usuario_id: usuario_id
+    });
+
+    if (error) throw error;
+
+    res.status(200).json({ message: 'Abono registrado exitosamente' });
+  } catch (err) {
+    console.error('Error registrarAbono:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getClientesConSaldo,
   getHistorialCliente,
-  pagarDeudaTotal
+  pagarDeudaTotal,
+  registrarAbono
 };

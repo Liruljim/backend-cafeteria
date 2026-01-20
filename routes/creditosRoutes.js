@@ -11,4 +11,7 @@ router.get('/historial/:cliente_id', creditosController.getHistorialCliente);
 // Registrar pago total
 router.post('/pagar-total', creditosController.pagarDeudaTotal);
 
+// Registrar abono parcial
+router.post('/abonar', creditosController.registrarAbono);
+
 module.exports = router;
