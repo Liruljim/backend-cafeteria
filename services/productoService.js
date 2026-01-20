@@ -35,7 +35,6 @@ const createProducto = async (productData) => {
   // AUTO-CREATE Inventory for all floors
   const { data: floors } = await supabase.from('pisos').select('id, nombre');
   if (floors && floors.length > 0) {
-    // Group floors by name to avoid duplicates if the DB has redundant floor names
     const uniqueFloorsByName = {};
     floors.forEach(f => {
         if (!uniqueFloorsByName[f.nombre.trim().toLowerCase()]) {
@@ -46,7 +45,12 @@ const createProducto = async (productData) => {
     const uniqueFloorIds = Object.values(uniqueFloorsByName);
     
     for (const floorId of uniqueFloorIds) {
-        // Check if already exists to avoid 400 with upsert without constraint
+        // Determine initial stock for this floor
+        let initialStock = 0;
+        if (productData.piso_inicial_id === floorId) {
+            initialStock = parseInt(productData.stock_inicial) || 0;
+        }
+
         const { data: existing } = await supabase
             .from('inventario')
             .select('id')
@@ -58,7 +62,7 @@ const createProducto = async (productData) => {
             await supabase.from('inventario').insert({
                 producto_id: newProd.id,
                 piso_id: floorId,
-                stock: 0
+                stock: initialStock
             });
         }
     }
