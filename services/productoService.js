@@ -24,8 +24,9 @@ const createProducto = async (productData) => {
   }
 
   // Create Product
+  const { piso_inicial_id, stock_inicial, ...cleanData } = productData;
   const productToInsert = {
-    ...productData,
+    ...cleanData,
     tipo: productData.tipo || 'stock' // Default to stock if not provided
   };
 
@@ -89,7 +90,8 @@ const updateProducto = async (id, productData) => {
      }
   }
 
-  const { data: updated, error } = await supabase.from('productos').update(productData).eq('id', id).select().single();
+  const { piso_inicial_id, stock_inicial, ...cleanData } = productData;
+  const { data: updated, error } = await supabase.from('productos').update(cleanData).eq('id', id).select().single();
   if (error) throw error;
   return updated;
 };
