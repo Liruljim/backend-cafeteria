@@ -23,9 +23,11 @@ async function registrarCliente(req, res) {
       .single();
 
     if (error) throw error;
-
     res.status(201).json({ message: 'Cliente registrado exitosamente', cliente: data });
   } catch (err) {
+    if (err.code === '23505') {
+        return res.status(400).json({ error: 'Ya existe un cliente con esta cédula.' });
+    }
     console.error(err);
     res.status(500).json({ error: err.message });
   }
@@ -115,10 +117,10 @@ async function buscarClientes(req, res) {
     const isNumeric = /^\d+$/.test(q);
 
     if (isNumeric) {
-        
-       query = query.or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,cedula.eq.${q}`);
+        // Partial match on cedula by casting to text, plus name/last name
+        query = query.or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,cedula.cast.text.ilike.%${q}%`);
     } else {
-       query = query.or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%`);
+        query = query.or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%`);
     }
 
     const { data, error } = await query;
