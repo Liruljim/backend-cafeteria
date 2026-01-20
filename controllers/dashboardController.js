@@ -9,7 +9,7 @@ const getMetrics = async (req, res) => {
         const { data: salesToday, error: salesErr } = await supabase
             .from('ventas')
             .select('total')
-            .gte('fecha', today.toISOString());
+            .gte('fecha_venta', today.toISOString());
         
         if (salesErr) throw salesErr;
         const totalSales = salesToday.reduce((acc, v) => acc + parseFloat(v.total), 0);
@@ -19,7 +19,7 @@ const getMetrics = async (req, res) => {
             .from('ventas')
             .select('total')
             .eq('metodo_pago', 'CREDITO')
-            .gte('fecha', today.toISOString());
+            .gte('fecha_venta', today.toISOString());
         
         if (credErr) throw credErr;
         const totalCredits = creditsToday.reduce((acc, v) => acc + parseFloat(v.total), 0);
@@ -46,8 +46,8 @@ const getMetrics = async (req, res) => {
         // 5. Recent Activity (Mix of sales and movements)
         const { data: recentSales, error: recSalesErr } = await supabase
             .from('ventas')
-            .select('total, metodo_pago, fecha, clientes(nombre)')
-            .order('fecha', { ascending: false })
+            .select('total, metodo_pago, fecha_venta, clientes(nombre)')
+            .order('fecha_venta', { ascending: false })
             .limit(5);
 
         res.json({
