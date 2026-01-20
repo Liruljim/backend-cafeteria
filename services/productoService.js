@@ -27,6 +27,7 @@ const createProducto = async (productData) => {
   const { piso_inicial_id, stock_inicial, ...cleanData } = productData;
   const productToInsert = {
     ...cleanData,
+    categoria_id: productData.category_id, // Sync redundant columns
     tipo: productData.tipo || 'stock' // Default to stock if not provided
   };
 
@@ -91,6 +92,10 @@ const updateProducto = async (id, productData) => {
   }
 
   const { piso_inicial_id, stock_inicial, ...cleanData } = productData;
+  if (cleanData.category_id) {
+    cleanData.categoria_id = cleanData.category_id;
+  }
+
   const { data: updated, error } = await supabase.from('productos').update(cleanData).eq('id', id).select().single();
   if (error) throw error;
   return updated;

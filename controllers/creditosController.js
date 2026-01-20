@@ -45,8 +45,6 @@ async function getHistorialCliente(req, res) {
         fecha_pago,
         usuarios (nombre)
       `)
-      .eq('usuario_id', cliente_id) // Nota: pagos_credito tiene usuario_id (admin que cobró) y relacion con credito_id
-      // Pero para traer todos los pagos de UN CLIENTE, necesitamos filtrar por los creditos del cliente
       .in('credito_id', ventas.map(v => v.id));
 
     if (pagosErr && ventas.length > 0) throw pagosErr;
