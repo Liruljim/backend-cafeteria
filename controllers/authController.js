@@ -44,7 +44,7 @@ async function login(req, res) {
   const user = data.user;
   const { data: usuarioDB, error: errorUsuario } = await supabase
     .from("usuarios")
-    .select("rol, nombre")
+    .select("id, rol, nombre")
     .eq("auth_id", user.id)
     .single();
 
@@ -55,7 +55,7 @@ async function login(req, res) {
     refresh_token: data.session.refresh_token,
     expires_at: data.session.expires_at,
     user: {
-      id: user.id,
+      id: usuarioDB.id,
       email: user.email,
       rol: usuarioDB.rol,
       nombre: usuarioDB.nombre
