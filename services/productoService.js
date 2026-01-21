@@ -102,6 +102,13 @@ const updateProducto = async (id, productData) => {
 };
 
 const deleteProducto = async (id) => {
+  // 1. Eliminar movimientos de inventario relacionados primero para evitar error de FK
+  await supabase.from('movimientos_inventario').delete().eq('producto_id', id);
+
+  // 2. Eliminar registros de inventario (stock actual por piso)
+  await supabase.from('inventario').delete().eq('producto_id', id);
+
+  // 3. Finalmente eliminar el producto
   const { error } = await supabase.from('productos').delete().eq('id', id);
   if (error) throw error;
   return true;

@@ -20,7 +20,7 @@ async function getClientesConSaldo(req, res) {
 async function getHistorialCliente(req, res) {
   const { cliente_id } = req.params;
   try {
-    // 1. Obtener ventas a crédito (pendientes y pagadas)
+    // 1. Obtener ventas a crédito (pendientes y pagadas) con sus productos
     const { data: ventas, error: ventasErr } = await supabase
       .from('creditos')
       .select(`
@@ -29,7 +29,15 @@ async function getHistorialCliente(req, res) {
         saldo_pendiente,
         estado,
         fecha_inicio,
-        fecha_vencimiento
+        fecha_vencimiento,
+        ventas (
+          id,
+          detalle_ventas (
+            cantidad,
+            precio_unitario,
+            productos (nombre)
+          )
+        )
       `)
       .eq('cliente_id', cliente_id)
       .order('fecha_inicio', { ascending: false });

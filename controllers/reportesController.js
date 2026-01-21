@@ -15,7 +15,12 @@ async function getReporteVentas(req, res) {
         total_usd, 
         total_bs,
         clientes!cliente_id(nombre, apellido, cedula),
-        pisos!piso_id(nombre)
+        pisos!piso_id(nombre),
+        detalle_ventas (
+          cantidad,
+          precio_unitario,
+          productos (nombre)
+        )
       `)
       .order('created_at', { ascending: false });
 
