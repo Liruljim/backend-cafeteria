@@ -1,4 +1,4 @@
-const supabase = require('../utils/supabaseClient');
+const supabase = require('../config/supabaseClient');
 
 // 📌 Crear categoría
 async function crearCategoria(req, res) {

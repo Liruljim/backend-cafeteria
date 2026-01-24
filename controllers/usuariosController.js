@@ -1,4 +1,4 @@
-const supabase = require('../utils/supabaseClient');
+const supabase = require('../config/supabaseClient');
 
 // Registrar usuario (Admin-like via signUp)
 async function registrarUsuario(req, res) {
