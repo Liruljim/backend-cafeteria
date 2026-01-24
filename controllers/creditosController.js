@@ -71,16 +71,30 @@ async function getHistorialCliente(req, res) {
  * Registra el pago total de la deuda de un cliente
  */
 async function pagarDeudaTotal(req, res) {
-  const { cliente_id, usuario_id } = req.body; // usuario_id es el ID del admin que procesa el pago
+  const { cliente_id } = req.body;
+  
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Token requerido' });
 
-  if (!cliente_id || !usuario_id) {
-    return res.status(400).json({ error: 'cliente_id y usuario_id son requeridos' });
+  if (!cliente_id) {
+    return res.status(400).json({ error: 'cliente_id es requerido' });
   }
 
   try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) throw new Error('Usuario no autenticado');
+
+    const { data: publicUser, error: userError } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (userError || !publicUser) throw new Error('Usuario no encontrado en base de datos');
+
     const { error } = await supabase.rpc('registrar_pago_completo', {
       p_cliente_id: cliente_id,
-      p_usuario_id: usuario_id
+      p_usuario_id: publicUser.id
     });
 
     if (error) throw error;
@@ -96,17 +110,37 @@ async function pagarDeudaTotal(req, res) {
  * Registra un abono general que se distribuye entre los créditos pendientes (FIFO)
  */
 async function registrarAbono(req, res) {
-  const { cliente_id, monto, usuario_id } = req.body;
+  const { cliente_id, monto } = req.body;
+  
+  // Extract token
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Token requerido' });
 
-  if (!cliente_id || !monto || !usuario_id) {
-    return res.status(400).json({ error: 'cliente_id, monto y usuario_id son requeridos' });
+  if (!cliente_id || !monto) {
+    return res.status(400).json({ error: 'cliente_id y monto son requeridos' });
   }
 
   try {
+    // 1. Get Auth User
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) throw new Error('Usuario no autenticado');
+
+    // 2. Resolve Public User ID (usuarios table)
+    const { data: publicUser, error: userError } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (userError || !publicUser) throw new Error('Usuario no encontrado en base de datos');
+
+    const realUsuarioId = publicUser.id;
+
+    // 3. Call RPC with correct ID
     const { error } = await supabase.rpc('registrar_abono_general', {
       p_cliente_id: cliente_id,
       p_monto: monto,
-      p_usuario_id: usuario_id
+      p_usuario_id: realUsuarioId
     });
 
     if (error) throw error;
